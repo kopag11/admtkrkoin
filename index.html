@@ -7,6 +7,7 @@
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   
   <style>
@@ -717,12 +718,41 @@ function showMainApp() {
   showMenu('dashboard');
 }
 
-async function doLogout() {
-  if (confirm('Yakin ingin keluar dari sistem?')) {
-    await sb.auth.signOut();
-    localStorage.removeItem('adminSession');
-    location.reload();
-  }
+function doLogout() {
+  Swal.fire({
+    title: 'Keluar dari Sistem?',
+    text: "Sesi Anda akan diakhiri dan harus login kembali.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444', 
+    cancelButtonColor: '#94a3b8',  
+    confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Ya, Keluar',
+    cancelButtonText: 'Batal',
+    reverseButtons: true 
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      Swal.fire({
+        title: 'Menutup Sesi...',
+        text: 'Mohon tunggu sebentar.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      try {
+        await sb.auth.signOut();
+        
+        localStorage.removeItem('adminSession');
+        
+        location.reload();
+      } catch (error) {
+        console.error('Logout error:', error);
+        localStorage.removeItem('adminSession');
+        location.reload();
+      }
+    }
+  });
 }	
 
 function showMenu(menu) {
@@ -1075,21 +1105,31 @@ async function showToko() {
 }
 
 async function deleteToko(id) {
-  if (!confirm('Yakin ingin menghapus toko ini?')) return;
-  
-  try {
-    const { error } = await sb
-      .from('toko')
-      .delete()
-      .eq('id', id);
-    
-    if (error) throw error;
-    
-    showNotification('Toko berhasil dihapus', 'success');
-    showToko();
-  } catch (error) {
-    showNotification('Error: ' + error.message, 'error');
-  }
+  Swal.fire({
+    title: 'Hapus Toko?',
+    text: "Data toko ini akan dihapus permanen!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#94a3b8',
+    confirmButtonText: '<i class="fas fa-trash"></i> Ya, Hapus',
+    cancelButtonText: 'Batal',
+    reverseButtons: true
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+      try {
+        const { error } = await sb.from('toko').delete().eq('id', id);
+        if (error) throw error;
+        Swal.close();
+        showNotification('Toko berhasil dihapus', 'success');
+        showToko();
+      } catch (error) {
+        Swal.close();
+        showNotification('Error: ' + error.message, 'error');
+      }
+    }
+  });
 }
 
 function exportTokoToExcel() {
@@ -1586,21 +1626,31 @@ async function loadRuteForCabang() {
 }
 
 async function deleteRute(id) {
-  if (!confirm('Yakin ingin menghapus rute ini?')) return;
-  
-  try {
-    const { error } = await sb
-      .from('rute')
-      .delete()
-      .eq('id', id);
-    
-    if (error) throw error;
-    
-    showNotification('Rute berhasil dihapus', 'success');
-    showRute();
-  } catch (error) {
-    showNotification('Error: ' + error.message, 'error');
-  }
+  Swal.fire({
+    title: 'Hapus Jadwal Rute?',
+    text: "Jadwal rute ini akan dihapus dari sistem!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#94a3b8',
+    confirmButtonText: '<i class="fas fa-trash"></i> Ya, Hapus',
+    cancelButtonText: 'Batal',
+    reverseButtons: true
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+      try {
+        const { error } = await sb.from('rute').delete().eq('id', id);
+        if (error) throw error;
+        Swal.close();
+        showNotification('Rute berhasil dihapus', 'success');
+        showRute();
+      } catch (error) {
+        Swal.close();
+        showNotification('Error: ' + error.message, 'error');
+      }
+    }
+  });
 }
 
 function exportRuteToExcel() {
@@ -1675,21 +1725,31 @@ async function showTemplate() {
 }
 
 async function deleteTemplate(id) {
-  if (!confirm('Yakin ingin menghapus template ini?')) return;
-  
-  try {
-    const { error } = await sb
-      .from('template')
-      .delete()
-      .eq('id', id);
-    
-    if (error) throw error;
-    
-    showNotification('Template berhasil dihapus', 'success');
-    showTemplate();
-  } catch (error) {
-    showNotification('Error: ' + error.message, 'error');
-  }
+  Swal.fire({
+    title: 'Hapus Template?',
+    text: "Template ini akan dihapus permanen!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#94a3b8',
+    confirmButtonText: '<i class="fas fa-trash"></i> Ya, Hapus',
+    cancelButtonText: 'Batal',
+    reverseButtons: true
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+      try {
+        const { error } = await sb.from('template').delete().eq('id', id);
+        if (error) throw error;
+        Swal.close();
+        showNotification('Template berhasil dihapus', 'success');
+        showTemplate();
+      } catch (error) {
+        Swal.close();
+        showNotification('Error: ' + error.message, 'error');
+      }
+    }
+  });
 }
 
 async function showUsers() {
@@ -1770,40 +1830,67 @@ async function showUsers() {
 }
 
 async function resetPassword(nik) {
-  const newPass = prompt('Enter new password for ' + nik + ':');
-  if (!newPass) return;
-  
-  try {
-    const { error } = await sb
-      .from('users')
-      .update({ password: newPass, is_first_login: true })
-      .eq('nik', nik);
-    
-    if (error) throw error;
-    
-    showNotification('Password berhasil direset', 'success');
-    showUsers();
-  } catch (error) {
-    showNotification('Error: ' + error.message, 'error');
-  }
+  Swal.fire({
+    title: 'Reset Password',
+    html: `Masukkan password baru untuk user <b>${nik}</b>:`,
+    input: 'text',
+    inputPlaceholder: 'Ketik password baru...',
+    icon: 'info',
+    showCancelButton: true,
+    confirmButtonColor: '#f59e0b',
+    cancelButtonColor: '#94a3b8',
+    confirmButtonText: '<i class="fas fa-key"></i> Reset Password',
+    cancelButtonText: 'Batal',
+    reverseButtons: true,
+    inputValidator: (value) => {
+      if (!value) {
+        return 'Password tidak boleh kosong!';
+      }
+    }
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      const newPass = result.value;
+      Swal.fire({ title: 'Merubah Password...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+      try {
+        const { error } = await sb.from('users').update({ password: newPass, is_first_login: true }).eq('nik', nik);
+        if (error) throw error;
+        Swal.close();
+        showNotification('Password berhasil direset', 'success');
+        showUsers();
+      } catch (error) {
+        Swal.close();
+        showNotification('Error: ' + error.message, 'error');
+      }
+    }
+  });
 }
 
 async function deleteUser(nik) {
-  if (!confirm('Yakin ingin menghapus user ' + nik + '?')) return;
-  
-  try {
-    const { error } = await sb
-      .from('users')
-      .delete()
-      .eq('nik', nik);
-    
-    if (error) throw error;
-    
-    showNotification('User berhasil dihapus', 'success');
-    showUsers();
-  } catch (error) {
-    showNotification('Error: ' + error.message, 'error');
-  }
+  Swal.fire({
+    title: 'Hapus User?',
+    html: `Yakin ingin menghapus user <b>${nik}</b> secara permanen?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#94a3b8',
+    confirmButtonText: '<i class="fas fa-trash"></i> Ya, Hapus',
+    cancelButtonText: 'Batal',
+    reverseButtons: true
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+      try {
+        const { error } = await sb.from('users').delete().eq('nik', nik);
+        if (error) throw error;
+        Swal.close();
+        showNotification('User berhasil dihapus', 'success');
+        showUsers();
+      } catch (error) {
+        Swal.close();
+        showNotification('Error: ' + error.message, 'error');
+      }
+    }
+  });
 }
 
 async function showNopol() {
@@ -1886,21 +1973,31 @@ async function toggleNopolActive(id, newStatus) {
 }
 
 async function deleteNopol(id) {
-  if (!confirm('Yakin ingin menghapus nopol ini?')) return;
-  
-  try {
-    const { error } = await sb
-      .from('nopol')
-      .delete()
-      .eq('id', id);
-    
-    if (error) throw error;
-    
-    showNotification('Nopol berhasil dihapus', 'success');
-    showNopol();
-  } catch (error) {
-    showNotification('Error: ' + error.message, 'error');
-  }
+  Swal.fire({
+    title: 'Hapus Nopol?',
+    text: "Data Nopol kendaraan ini akan dihapus permanen!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#94a3b8',
+    confirmButtonText: '<i class="fas fa-trash"></i> Ya, Hapus',
+    cancelButtonText: 'Batal',
+    reverseButtons: true
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+      try {
+        const { error } = await sb.from('nopol').delete().eq('id', id);
+        if (error) throw error;
+        Swal.close();
+        showNotification('Nopol berhasil dihapus', 'success');
+        showNopol();
+      } catch (error) {
+        Swal.close();
+        showNotification('Error: ' + error.message, 'error');
+      }
+    }
+  });
 }
 
 async function showViewDashboard() {
