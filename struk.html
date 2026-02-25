@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Struk Digital - Tukar Koin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background: #e2e8f0; font-family: 'Courier Prime', monospace; display: flex; justify-content: center; padding: 20px 10px; margin: 0; }
+        .receipt-card { background: white; width: 100%; max-width: 400px; padding: 30px 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; }
+        .receipt-card::before, .receipt-card::after { content: ""; position: absolute; left: 0; right: 0; height: 10px; background-size: 20px 20px; }
+        .receipt-card::before { top: -10px; background-image: radial-gradient(circle at 10px 0, transparent 10px, white 11px); }
+        .receipt-card::after { bottom: -10px; background-image: radial-gradient(circle at 10px 10px, transparent 10px, white 11px); }
+        .text-center { text-align: center; }
+        .font-bold { font-weight: bold; }
+        .header-title { font-size: 22px; margin: 0 0 5px 0; }
+        .header-sub { font-size: 14px; margin: 0 0 20px 0; border-bottom: 2px dashed #000; padding-bottom: 15px; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+        .divider { border-bottom: 1px dashed #000; margin: 15px 0; }
+        .table-header { display: flex; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px; font-size: 13px; }
+        .col-1 { flex: 2; } .col-2 { flex: 1; text-align: center; } .col-3 { flex: 2; text-align: right; }
+        .total-box { border: 2px dashed #000; padding: 10px; text-align: center; font-size: 18px; margin: 20px 0; font-weight: bold; background: #f8fafc; }
+        .ttd-box { display: flex; justify-content: space-between; margin-top: 30px; text-align: center; font-size: 12px; }
+        .ttd-img { max-width: 100px; max-height: 60px; margin: 5px 0; }
+        .print-btn { display: block; width: 100%; max-width: 400px; background: #4f46e5; color: white; border: none; padding: 15px; font-size: 16px; font-weight: bold; border-radius: 10px; margin: 20px auto; cursor: pointer; text-align: center; text-decoration: none; font-family: sans-serif; }
+        @media print { body { background: white; padding: 0; } .receipt-card { box-shadow: none; max-width: 100%; } .print-btn { display: none; } .receipt-card::before, .receipt-card::after { display: none; } }
+    </style>
+</head>
+<body>
+
+    <div style="width: 100%; max-width: 400px;">
+        <div class="receipt-card" id="strukContent">
+            <h1 class="text-center font-bold header-title">INDOMARET</h1>
+            <p class="text-center header-sub">BUKTI PENUKARAN KOIN</p>
+
+            <div id="loading" class="text-center font-bold" style="margin: 50px 0;">Mencari Data Struk...</div>
+            
+            <div id="receiptData" style="display: none;">
+                <div class="row"><span style="min-width: 70px;">Tanggal</span><span>: <span id="rTgl"></span></span></div>
+                <div class="row"><span style="min-width: 70px;">Toko</span><span>: <span id="rToko"></span></span></div>
+                <div class="row"><span style="min-width: 70px;">Jabatan</span><span>: <span id="rTim"></span></span></div>
+                <div class="row"><span style="min-width: 70px;">Petugas</span><span>: <span id="rPetugas"></span></span></div>
+                <div class="row"><span style="min-width: 70px;">Nopol</span><span>: <span id="rNopol"></span></span></div>
+
+                <div class="divider"></div>
+                
+                <div class="font-bold" style="margin-bottom: 10px;">Pecahan (Tukar)</div>
+                <div class="table-header"><div class="col-1">Nominal</div><div class="col-2">Qty</div><div class="col-3">Total</div></div>
+                <div id="koinList"></div>
+
+                <div class="total-box">TOTAL TUKAR: Rp <span id="rTotal"></span></div>
+
+                <div id="terimaArea">
+                    <div class="divider"></div>
+                    <div class="text-center font-bold" style="margin-bottom: 10px;">UANG DITERIMA DARI TOKO</div>
+                    <div class="table-header"><div class="col-1">Pecahan</div><div class="col-2">Qty</div><div class="col-3">Nominal</div></div>
+                    <div id="kertasList"></div>
+                    <div class="row font-bold" style="margin-top: 10px; justify-content: flex-end;">Total Terima: Rp <span id="rTerima"></span></div>
+                </div>
+
+                <div class="ttd-box">
+                    <div>
+                        <div>Petugas</div>
+                        <img id="imgPetugas" class="ttd-img" src="" style="display:none;" onerror="this.style.display='none'">
+                        <div style="margin-top:20px;">(<span id="nPetugas"></span>)</div>
+                    </div>
+                    <div>
+                        <div>Tim Toko</div>
+                        <img id="imgToko" class="ttd-img" src="" style="display:none;" onerror="this.style.display='none'">
+                        <div style="margin-top:20px;">(<span id="nTim"></span>)</div>
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                <div class="text-center" style="font-size: 11px; color: #666;">*** Simpan struk ini sebagai bukti sah ***<br>Sistem Digital Tukar Koin</div>
+            </div>
+        </div>
+        
+        <button class="print-btn" onclick="window.print()">🖨️ Download / Print PDF</button>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://afrdfnwuickqzwzrbtiw.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmcmRmbnd1aWNrcXp3enJidGl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMTM3MDcsImV4cCI6MjA4NTg4OTcwN30.QFjpst326SJwL4pGmTM4xldP_rdxaQTFj1wmssWz83Q";
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const txId = urlParams.get('id');
+
+            if (!txId) {
+                document.getElementById('loading').innerText = "Struk tidak ditemukan (ID kosong).";
+                return;
+            }
+
+            try {
+                
+                const { data: tx, error: txErr } = await sb.from('transaksi').select('*').eq('id', txId).single();
+                if (txErr || !tx) throw new Error("Struk tidak ditemukan di database.");
+
+               
+                const { data: user } = await sb.from('users').select('ttd_image').eq('nama', tx.petugas_nama).single();
+
+                
+                const { data: toko } = await sb.from('toko').select('nama_toko').eq('kode_toko', tx.kode_toko).single();
+
+                
+                let rawTime = tx.created_at;
+                if (rawTime && !rawTime.endsWith('Z') && !rawTime.includes('+')) { rawTime += 'Z'; }
+                const dateObj = new Date(rawTime);
+                const formatTgl = dateObj.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace('.', ':');
+
+                document.getElementById('rTgl').innerText = formatTgl;
+                document.getElementById('rToko').innerText = `${tx.kode_toko} - ${toko ? toko.nama_toko : ''}`;
+                document.getElementById('rTim').innerText = `${tx.jabatan || ''} - ${tx.nama_tim || ''}`;
+                document.getElementById('rPetugas').innerText = tx.petugas_nama;
+                document.getElementById('rNopol').innerText = tx.nopol;
+                document.getElementById('nPetugas').innerText = tx.petugas_nama;
+                document.getElementById('nTim').innerText = tx.nama_tim || 'Tim Toko';
+
+                
+                if (user && user.ttd_image) {
+                    document.getElementById('imgPetugas').src = user.ttd_image;
+                    document.getElementById('imgPetugas').style.display = 'inline-block';
+                }
+                if (tx.foto_url && tx.foto_url.startsWith('data:image')) {
+                    document.getElementById('imgToko').src = tx.foto_url;
+                    document.getElementById('imgToko').style.display = 'inline-block';
+                }
+
+              
+                let koinHTML = '';
+                const denoms = [ {v:100, q:tx.k100}, {v:200, q:tx.k200}, {v:500, q:tx.k500}, {v:1000, q:tx.k1000}, {v:2000, q:tx.k2000}, {v:5000, q:tx.k5000}, {v:10000, q:tx.k10000}, {v:20000, q:tx.k20000} ];
+                denoms.forEach(d => {
+                    if(d.q > 0) {
+                        koinHTML += `<div class="row"><div class="col-1">${d.v.toLocaleString('id-ID')}</div><div class="col-2">${d.q}</div><div class="col-3">${(d.v*d.q).toLocaleString('id-ID')}</div></div>`;
+                    }
+                });
+                document.getElementById('koinList').innerHTML = koinHTML;
+                document.getElementById('rTotal').innerText = (tx.total_uang || 0).toLocaleString('id-ID');
+
+                
+                let kertasHTML = '';
+                let tTerima = 0;
+                if (tx.t_terima_50 > 0) {
+                    tTerima += (tx.t_terima_50 * 50000);
+                    kertasHTML += `<div class="row"><div class="col-1">50.000</div><div class="col-2">${tx.t_terima_50}</div><div class="col-3">${(tx.t_terima_50*50000).toLocaleString('id-ID')}</div></div>`;
+                }
+                if (tx.t_terima_100 > 0) {
+                    tTerima += (tx.t_terima_100 * 100000);
+                    kertasHTML += `<div class="row"><div class="col-1">100.000</div><div class="col-2">${tx.t_terima_100}</div><div class="col-3">${(tx.t_terima_100*100000).toLocaleString('id-ID')}</div></div>`;
+                }
+
+                if (tTerima === 0) {
+                    document.getElementById('terimaArea').style.display = 'none';
+                } else {
+                    document.getElementById('kertasList').innerHTML = kertasHTML;
+                    document.getElementById('rTerima').innerText = tTerima.toLocaleString('id-ID');
+                }
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('receiptData').style.display = 'block';
+
+            } catch (e) {
+                document.getElementById('loading').innerText = "Error: " + e.message;
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
